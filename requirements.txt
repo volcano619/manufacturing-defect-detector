@@ -1,0 +1,17 @@
+# Manufacturing Defect Detection
+# Dependencies
+
+# Core
+streamlit>=1.28.0
+numpy>=1.24.0
+pillow>=10.0.0
+
+# Visualization
+plotly>=5.15.0
+
+# Deep Learning (optional - for full CNN model)
+# torch>=2.0.0
+# torchvision>=0.15.0
+
+# Evaluation
+pandas>=2.0.0
