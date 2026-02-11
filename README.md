@@ -11,6 +11,16 @@ A **CNN-based visual inspection system** for automated quality control in manufa
 
 ---
 
+## 📸 Business Results
+
+### AI Visual Inspection — Defect Classification with Grad-CAM Explainability
+![Defect Detection — 96.8% accuracy, 98.5% recall, Grad-CAM localization, 47ms inference](./screenshots/cv_defect_detection.png)
+
+### Business Impact Dashboard — Cost Savings & ROI
+![Manufacturing Business Impact — $270K annual savings, 90% fewer defect escapes, 50x throughput, 2.7-5.4x ROI](./screenshots/cv_business_impact.png)
+
+---
+
 ## 1. Business Problem
 
 ### The Quality Control Crisis
