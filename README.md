@@ -19,6 +19,8 @@ A **CNN-based visual inspection system** for automated quality control in manufa
 ### AI Visual Inspection — Defect Classification with Grad-CAM Explainability
 ![Defect Detection Solution UI — 99.8% accuracy, Grad-CAM localization, 47ms inference](./screenshots/vision_solution_ui_v2.png)
 
+**🔴 Live Cloud Deployment:** [https://huggingface.co/spaces/vnicks177/ComputerVision-demo](https://huggingface.co/spaces/vnicks177/ComputerVision-demo)
+
 ---
 
 ## 1. Business Problem
