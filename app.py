@@ -137,6 +137,15 @@ with st.sidebar:
             st.session_state['demo_image'] = generate_defect_image()
             st.session_state['demo_type'] = 'defect'
     
+    # Help Section
+    shared_ui.add_help_section(
+        "Manufacturing Defect Detection",
+        "AI-powered visual inspection system for automated quality control.",
+        "Upload a manufacturing part image or use 'Generate Demo Images' to test model accuracy.",
+        "Replaces error-prone manual inspection with 95%+ accurate AI detection and Grad-CAM explainability.",
+        "A human inspector misses a hairline crack after a long shift; the AI flags it in milliseconds."
+    )
+    
     st.markdown("---")
     st.markdown("### 📊 Model Info")
     st.markdown("- **Model**: ResNet-18 (pretrained)")
