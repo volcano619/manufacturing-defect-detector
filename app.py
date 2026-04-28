@@ -111,11 +111,13 @@ with st.sidebar:
     st.markdown("## ⚙️ Settings")
     
     # Confidence threshold
+    if "confidence_thresh" not in st.session_state:
+        st.session_state.confidence_thresh = CONFIDENCE_THRESHOLD
     confidence_thresh = st.slider(
         "Confidence Threshold",
         min_value=0.3,
         max_value=0.9,
-        value=CONFIDENCE_THRESHOLD,
+        key="confidence_thresh",
         step=0.05,
         help="Minimum confidence to classify as defect"
     )
@@ -206,7 +208,7 @@ with tab1:
         if image is not None:
             # Run prediction
             with st.spinner("Analyzing..."):
-                prediction, confidence = detector.predict(image)
+                prediction, confidence = detector.predict(image, threshold=confidence_thresh)
             
             # Display result
             st.markdown("### Result")
@@ -262,7 +264,7 @@ with tab2:
             
             for i, (img_path, true_label) in enumerate(test_images):
                 img = Image.open(img_path).convert('RGB')
-                pred_label, confidence = detector.predict(img)
+                pred_label, confidence = detector.predict(img, threshold=confidence_thresh)
                 
                 results.append({
                     'Image': Path(img_path).name,
@@ -397,7 +399,7 @@ with tab4:
             
             for i, (img_path, true_label) in enumerate(test_images):
                 img = Image.open(img_path).convert('RGB')
-                pred_label, _ = detector.predict(img)
+                pred_label, _ = detector.predict(img, threshold=confidence_thresh)
                 pred_idx = CLASSES.index(pred_label)
                 
                 evaluator.add_prediction(true_label, pred_idx)

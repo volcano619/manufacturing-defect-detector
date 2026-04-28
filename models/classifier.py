@@ -43,26 +43,32 @@ class SimpleClassifier:
         self.threshold = 0.3  # Defect detection threshold
         self.is_fitted = True
     
-    def predict(self, image: np.ndarray) -> Tuple[str, float]:
+    def predict(self, image: np.ndarray, threshold: float = 0.5) -> Tuple[str, float]:
         """
-        Simple defect detection based on color variance.
-        
-        Args:
-            image: RGB image array (H, W, 3) in range [0, 255]
+        Defect detection based on dark pixel ratio and color variance.
+        Defect images contain significantly more very dark or off-color pixels.
+        """
+        if isinstance(image, np.ndarray) and image.ndim == 3:
+            # Dark pixel ratio: pixels below 80 brightness (scratches/cracks are very dark)
+            gray = np.mean(image, axis=2)
+            dark_ratio = np.mean(gray < 80)
             
-        Returns:
-            (prediction, confidence)
-        """
-        # Calculate standard deviation of pixel values
-        std = np.std(image)
-        
-        # Higher variance often indicates defects
-        defect_score = min(std / 50.0, 1.0)  # Normalize
-        
-        if defect_score > self.threshold:
-            return "defect", defect_score
+            # Color channel deviation (contamination = off-color pixels)
+            r, g, b = image[:, :, 0], image[:, :, 1], image[:, :, 2]
+            color_dev = np.mean(np.abs(r.astype(float) - b.astype(float))) / 255.0
+            
+            # High variance in pixel intensities
+            pixel_std = np.std(image) / 128.0
+            
+            # Combine: weight dark pixels heavily since that's our defect signature
+            defect_score = min(dark_ratio * 8.0 + color_dev * 2.0 + pixel_std * 0.5, 1.0)
         else:
-            return "good", 1.0 - defect_score
+            defect_score = 0.3
+        
+        if defect_score >= threshold:
+            return "defect", min(defect_score, 0.99)
+        else:
+            return "good", min(1.0 - defect_score, 0.99)
     
     def predict_proba(self, image: np.ndarray) -> np.ndarray:
         """Return class probabilities."""
@@ -268,7 +274,8 @@ class DefectDetector:
     def predict(
         self,
         image,
-        return_proba: bool = False
+        return_proba: bool = False,
+        threshold: float = 0.5
     ) -> Tuple[str, float]:
         """
         Predict defect status for an image.
@@ -276,6 +283,7 @@ class DefectDetector:
         Args:
             image: PIL Image or numpy array
             return_proba: If True, return class probabilities
+            threshold: Minimum confidence to classify as defect
             
         Returns:
             (class_name, confidence) or probabilities
@@ -285,7 +293,7 @@ class DefectDetector:
         if not TORCH_AVAILABLE:
             if isinstance(image, Image.Image):
                 image = np.array(image)
-            return self.model.predict(image)
+            return self.model.predict(image, threshold=threshold)
         
         self.model.eval()
         
@@ -303,8 +311,13 @@ class DefectDetector:
         if return_proba:
             return proba
         
-        pred_class = int(proba.argmax())
-        confidence = float(proba[pred_class])
+        defect_prob = float(proba[1])
+        if defect_prob >= threshold:
+            pred_class = 1
+            confidence = defect_prob
+        else:
+            pred_class = 0
+            confidence = float(proba[0])
         
         return CLASSES[pred_class], confidence
     

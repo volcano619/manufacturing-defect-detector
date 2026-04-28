@@ -46,81 +46,70 @@ def create_base_surface(size: int = SYNTHETIC_IMAGE_SIZE) -> Image.Image:
 
 
 def add_scratch(img: Image.Image) -> Image.Image:
-    """Add scratch defect to image."""
+    """Add scratch defect to image (bold, visible)."""
     draw = ImageDraw.Draw(img)
     size = img.size[0]
     
-    # Random scratch parameters
-    num_scratches = random.randint(1, 3)
+    num_scratches = random.randint(3, 6)
     
     for _ in range(num_scratches):
         x1 = random.randint(10, size - 10)
         y1 = random.randint(10, size - 10)
-        
-        # Scratch direction and length
         angle = random.uniform(0, 2 * np.pi)
-        length = random.randint(30, 100)
-        
+        length = random.randint(60, 140)
         x2 = int(x1 + length * np.cos(angle))
         y2 = int(y1 + length * np.sin(angle))
-        
-        # Dark scratch line
-        scratch_color = random.randint(30, 80)
-        width = random.randint(1, 3)
+        scratch_color = random.randint(0, 40)  # Very dark
+        width = random.randint(3, 7)
         draw.line([(x1, y1), (x2, y2)], fill=(scratch_color, scratch_color, scratch_color), width=width)
     
     return img
 
 
 def add_crack(img: Image.Image) -> Image.Image:
-    """Add crack defect to image."""
+    """Add crack defect to image (bold, visible)."""
     draw = ImageDraw.Draw(img)
     size = img.size[0]
     
-    # Start point
     x, y = random.randint(20, size - 20), random.randint(20, size - 20)
     
-    # Generate crack path (random walk)
     points = [(x, y)]
-    for _ in range(random.randint(5, 10)):
-        dx = random.randint(-20, 20)
-        dy = random.randint(-20, 20)
+    for _ in range(random.randint(8, 14)):
+        dx = random.randint(-25, 25)
+        dy = random.randint(-25, 25)
         x = max(5, min(size - 5, x + dx))
         y = max(5, min(size - 5, y + dy))
         points.append((x, y))
     
-    # Draw crack
-    crack_color = random.randint(20, 60)
-    draw.line(points, fill=(crack_color, crack_color, crack_color), width=1)
+    crack_color = random.randint(0, 40)  # Very dark
+    draw.line(points, fill=(crack_color, crack_color, crack_color), width=3)
     
-    # Add branches
+    # Add multiple branches
     for i in range(0, len(points) - 1, 2):
-        if random.random() > 0.5:
-            bx = points[i][0] + random.randint(-15, 15)
-            by = points[i][1] + random.randint(-15, 15)
-            draw.line([points[i], (bx, by)], fill=(crack_color, crack_color, crack_color), width=1)
+        for _ in range(2):
+            bx = points[i][0] + random.randint(-25, 25)
+            by = points[i][1] + random.randint(-25, 25)
+            draw.line([points[i], (bx, by)], fill=(crack_color, crack_color, crack_color), width=2)
     
     return img
 
 
 def add_contamination(img: Image.Image) -> Image.Image:
-    """Add contamination spots to image."""
+    """Add contamination spots to image (large, bold)."""
     draw = ImageDraw.Draw(img)
     size = img.size[0]
     
-    # Random spots
-    num_spots = random.randint(2, 6)
+    num_spots = random.randint(5, 10)
     
     for _ in range(num_spots):
         cx = random.randint(20, size - 20)
         cy = random.randint(20, size - 20)
-        radius = random.randint(5, 20)
+        radius = random.randint(10, 35)  # Larger spots
         
-        # Dark or discolored spot
         if random.random() > 0.5:
-            spot_color = (random.randint(40, 80), random.randint(40, 80), random.randint(40, 80))
+            spot_color = (random.randint(0, 50), random.randint(0, 50), random.randint(0, 50))  # Very dark
         else:
-            spot_color = (random.randint(100, 140), random.randint(80, 100), random.randint(60, 80))
+            spot_color = (random.randint(180, 255), random.randint(80, 120), random.randint(0, 40))  # Orange/rust
         
         draw.ellipse([cx - radius, cy - radius, cx + radius, cy + radius], fill=spot_color)
     
