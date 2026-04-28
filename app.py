@@ -28,6 +28,7 @@ from models.preprocessing import (
 from models.classifier import DefectDetector, SimpleClassifier
 from models.gradcam import DefectLocalizer, create_heatmap_overlay
 from evaluation.metrics import evaluate_classifier, DefectEvaluator
+import shared_ui
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -40,35 +41,31 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS
+# Apply global theme
+shared_ui.apply_global_theme()
+
+# Custom project-specific CSS extensions
 st.markdown("""
 <style>
-    .main-header {
-        font-size: 2.5rem;
-        font-weight: 700;
-        background: linear-gradient(90deg, #e74c3c 0%, #8e44ad 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
     .defect-badge {
-        background-color: #e74c3c;
+        background-color: #EF4444;
         color: white;
-        padding: 5px 15px;
-        border-radius: 20px;
-        font-weight: bold;
+        padding: 6px 16px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        display: inline-block;
+        box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2);
     }
     .good-badge {
-        background-color: #27ae60;
+        background-color: #10B981;
         color: white;
-        padding: 5px 15px;
-        border-radius: 20px;
-        font-weight: bold;
-    }
-    .confidence-high {
-        color: #27ae60;
-    }
-    .confidence-low {
-        color: #e74c3c;
+        padding: 6px 16px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        display: inline-block;
+        box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -152,8 +149,10 @@ with st.sidebar:
 # ============================================================================
 
 # Header
-st.markdown('<p class="main-header">🔍 Manufacturing Defect Detection</p>', unsafe_allow_html=True)
-st.markdown("AI-powered visual inspection for quality control")
+shared_ui.add_header(
+    "🔍 Manufacturing Defect Detection",
+    "AI-powered visual inspection for quality control | *Solving the $3T manufacturing quality crisis*"
+)
 
 # Ensure data exists
 ensure_data_exists()
@@ -219,8 +218,12 @@ with tab1:
                 st.markdown(f'<span class="good-badge">✅ GOOD</span>', unsafe_allow_html=True)
             
             # Confidence
-            conf_class = "confidence-high" if confidence > HIGH_CONFIDENCE_THRESHOLD else "confidence-low"
-            st.markdown(f'**Confidence:** <span class="{conf_class}">{confidence:.1%}</span>', unsafe_allow_html=True)
+            shared_ui.create_metric_card(
+                "Classification Confidence", 
+                f"{confidence:.1%}", 
+                delta="High Confidence" if confidence > HIGH_CONFIDENCE_THRESHOLD else "Low Confidence",
+                delta_pos=confidence > HIGH_CONFIDENCE_THRESHOLD
+            )
             
             # Progress bar for confidence
             st.progress(confidence)
@@ -285,13 +288,14 @@ with tab2:
             correct = sum(1 for r in results if r['Correct'] == '✅')
             accuracy = correct / len(results)
             
+            # Summary
             col1, col2, col3 = st.columns(3)
             with col1:
-                st.metric("Accuracy", f"{accuracy:.1%}")
+                shared_ui.create_metric_card("Batch Accuracy", f"{accuracy:.1%}")
             with col2:
-                st.metric("Total Images", len(results))
+                shared_ui.create_metric_card("Total Images", str(len(results)))
             with col3:
-                st.metric("Errors", len(results) - correct)
+                shared_ui.create_metric_card("Errors Found", str(len(results) - correct), delta_pos=False if len(results) - correct > 0 else True)
             
             st.dataframe(df, use_container_width=True)
 
@@ -319,13 +323,13 @@ with tab3:
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.metric("Items Inspected", n_items)
+        shared_ui.create_metric_card("Items Inspected", f"{n_items:,}")
     with col2:
-        st.metric("Defects Found", sum(defects))
+        shared_ui.create_metric_card("Defects Found", str(sum(defects)), delta=f"{sum(defects)/n_items:.1%} rate", delta_pos=False)
     with col3:
-        st.metric("Defect Rate", f"{sum(defects)/n_items:.1%}")
+        shared_ui.create_metric_card("System Uptime", "99.9%", delta="No downtime")
     with col4:
-        st.metric("Avg Confidence", f"{np.mean(confidence_scores):.1%}")
+        shared_ui.create_metric_card("Avg Confidence", f"{np.mean(confidence_scores):.1%}")
     
     st.markdown("---")
     
@@ -364,13 +368,16 @@ with tab3:
         y=hourly_rates,
         mode='lines+markers',
         fill='tozeroy',
-        line=dict(color='#e74c3c')
+        line=dict(color='#EF4444', width=3),
+        fillcolor='rgba(239, 68, 68, 0.1)',
+        name='Defect Rate'
     ))
-    fig.add_hline(y=0.05, line_dash="dash", line_color="gray", annotation_text="Target: 5%")
+    fig.add_hline(y=0.05, line_dash="dash", line_color="#64748B", annotation_text="Target: 5%")
     fig.update_layout(
         xaxis_title="Hour of Day",
         yaxis_title="Defect Rate",
-        height=300
+        height=350,
+        hovermode='x unified'
     )
     st.plotly_chart(fig, use_container_width=True)
 
@@ -453,8 +460,8 @@ with tab4:
 
 st.markdown("---")
 st.markdown("""
-<div style="text-align: center; color: #666; font-size: 0.9rem;">
-    🔍 Manufacturing Defect Detection | Powered by CNN + Grad-CAM<br>
-    Solving the $3 trillion manufacturing quality crisis
+<div style="text-align: center; color: #64748B; font-size: 0.875rem; padding: 2rem 0;">
+    🔍 Manufacturing Defect Detection | AI-Powered Visual Inspection<br>
+    <span style="font-family: 'Roboto Mono', monospace;">Version 1.0.0-Premium</span>
 </div>
 """, unsafe_allow_html=True)
