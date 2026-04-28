@@ -225,13 +225,14 @@ with tab1:
             # Progress bar for confidence
             st.progress(confidence)
             
-            # Heatmap
-            if show_heatmap and prediction == "defect":
-                st.markdown("### Defect Localization")
+            # Heatmap - always show when toggle is ON
+            if show_heatmap:
+                caption = "Defect Heatmap (Grad-CAM)" if prediction == "defect" else "Activation Map (No significant defects detected)"
+                st.markdown("### Activation Heatmap")
                 try:
                     localizer = get_localizer(detector)
                     heatmap, overlay = localizer.localize(image)
-                    st.image(overlay, caption="Defect Heatmap (Grad-CAM)", use_container_width=True)
+                    st.image(overlay, caption=caption, use_container_width=True)
                 except Exception as e:
                     st.warning(f"Heatmap generation failed: {e}")
         else:
