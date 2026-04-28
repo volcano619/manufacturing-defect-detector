@@ -64,8 +64,12 @@ class SimpleClassifier:
             # Pixel std normalized
             pixel_std = np.std(image) / 128.0
             
-            # Weighted combination — dark ratio is the strongest signal
-            defect_score = min(dark_ratio * 6.0 + color_dev * 3.0 + pixel_std * 0.5, 1.0)
+            # Minimum brightness factor (defects are significantly darker than base)
+            min_brightness = np.min(gray)
+            min_pixel_factor = max(0, (120 - min_brightness) / 120.0)
+            
+            # Weighted combination — dark ratio and min pixel are strongest for scratches/cracks
+            defect_score = min(dark_ratio * 5.0 + min_pixel_factor * 0.4 + color_dev * 3.0 + pixel_std * 0.5, 1.0)
         else:
             defect_score = 0.3
         
