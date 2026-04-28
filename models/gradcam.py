@@ -53,26 +53,32 @@ class SimpleGradCAM:
     
     def generate(self, image: np.ndarray, prediction: str) -> np.ndarray:
         """
-        Generate a simple heatmap based on intensity variance.
+        Generate a heatmap highlighting anomalous regions (pure numpy, no scipy).
         """
         if len(image.shape) == 3:
-            gray = np.mean(image, axis=2)
+            gray = np.mean(image, axis=2).astype(np.float32)
         else:
-            gray = image
+            gray = image.astype(np.float32)
         
-        # Region with highest variance is likely defect
-        from scipy.ndimage import uniform_filter
+        # Dark pixel map — defects are dark lines/spots on a light background
+        dark_map = np.clip((150.0 - gray) / 150.0, 0, 1)
         
-        try:
-            local_mean = uniform_filter(gray, size=20)
-            local_sqmean = uniform_filter(gray ** 2, size=20)
-            local_var = np.sqrt(np.abs(local_sqmean - local_mean ** 2))
-        except ImportError:
-            # Fallback without scipy
-            local_var = np.abs(gray - np.mean(gray))
+        # Color deviation map — contamination has off-colors
+        if len(image.shape) == 3:
+            r = image[:, :, 0].astype(np.float32)
+            g = image[:, :, 1].astype(np.float32)
+            b = image[:, :, 2].astype(np.float32)
+            color_dev = np.abs(r - b) / 255.0
+        else:
+            color_dev = np.zeros_like(dark_map)
         
-        # Normalize
-        heatmap = (local_var - local_var.min()) / (local_var.max() - local_var.min() + 1e-8)
+        # Combine: dark pixels + color deviations = defect signature
+        heatmap = np.clip(dark_map * 0.7 + color_dev * 0.3, 0, 1)
+        
+        # Normalize to 0-1
+        hmin, hmax = heatmap.min(), heatmap.max()
+        if hmax > hmin:
+            heatmap = (heatmap - hmin) / (hmax - hmin)
         
         return heatmap
 

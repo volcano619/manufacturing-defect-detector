@@ -49,19 +49,23 @@ class SimpleClassifier:
         Defect images contain significantly more very dark or off-color pixels.
         """
         if isinstance(image, np.ndarray) and image.ndim == 3:
-            # Dark pixel ratio: pixels below 80 brightness (scratches/cracks are very dark)
             gray = np.mean(image, axis=2)
-            dark_ratio = np.mean(gray < 80)
             
-            # Color channel deviation (contamination = off-color pixels)
-            r, g, b = image[:, :, 0], image[:, :, 1], image[:, :, 2]
-            color_dev = np.mean(np.abs(r.astype(float) - b.astype(float))) / 255.0
+            # Dark pixel ratio: scratches/cracks are dark (0-40) on a light (160-200) base
+            # Use threshold of 130 to catch all defect types reliably
+            dark_ratio = np.mean(gray < 130)
             
-            # High variance in pixel intensities
+            # Color channel deviation: rust/contamination = high R, low B
+            r = image[:, :, 0].astype(float)
+            g = image[:, :, 1].astype(float)
+            b = image[:, :, 2].astype(float)
+            color_dev = np.mean(np.abs(r - b)) / 255.0
+            
+            # Pixel std normalized
             pixel_std = np.std(image) / 128.0
             
-            # Combine: weight dark pixels heavily since that's our defect signature
-            defect_score = min(dark_ratio * 8.0 + color_dev * 2.0 + pixel_std * 0.5, 1.0)
+            # Weighted combination — dark ratio is the strongest signal
+            defect_score = min(dark_ratio * 6.0 + color_dev * 3.0 + pixel_std * 0.5, 1.0)
         else:
             defect_score = 0.3
         

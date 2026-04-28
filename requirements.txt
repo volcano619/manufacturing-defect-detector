@@ -15,3 +15,4 @@ plotly>=5.15.0
 
 # Evaluation
 pandas>=2.0.0
+scipy>=1.10.0
